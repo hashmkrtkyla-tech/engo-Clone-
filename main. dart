@@ -1,0 +1,462 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const EngoApp());
+}
+
+class EngoApp extends StatefulWidget {
+  const EngoApp({super.key});
+
+  @override
+  State<EngoApp> createState() => _EngoAppState();
+}
+
+class _EngoAppState extends State<EngoApp> {
+  bool isDarkMode = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Engo Clone',
+      theme: isDarkMode ? ThemeData.dark() : ThemeData.light().copyWith(
+        primaryColor: Colors.blueAccent,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
+      ),
+      home: MainNavigationScreen(
+        isDarkMode: isDarkMode,
+        onThemeChanged: (value) {
+          setState(() {
+            isDarkMode = value;
+          });
+        },
+      ),
+    );
+  }
+}
+
+class MainNavigationScreen extends StatefulWidget {
+  final bool isDarkMode;
+  final ValueChanged<bool> onThemeChanged;
+
+  const MainNavigationScreen({
+    super.key,
+    required this.isDarkMode,
+    required this.onThemeChanged,
+  });
+
+  @override
+  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+}
+
+class _MainNavigationScreenState extends State<MainNavigationScreen> {
+  int _currentIndex = 0;
+  int streakDays = 5; 
+  int userXP = 120; 
+  final int targetXP = 300;
+
+  final List<Map<String, String>> savedWords = [
+    {'word': 'Forest', 'translation': 'غابة', 'example': 'The lion lives in the forest.'},
+    {'word': 'Journey', 'translation': 'رحلة', 'example': 'A long journey starts with a single step.'},
+    {'word': 'Treasure', 'translation': 'كنز', 'example': 'They found the golden treasure.'},
+  ];
+
+  void _addWordToVocabulary(String word, String translation, String example) {
+    setState(() {
+      if (!savedWords.any((element) => element['word'] == word)) {
+        savedWords.add({
+          'word': word,
+          'translation': translation,
+          'example': example,
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> screens = [
+      StoriesTab(
+        streakDays: streakDays,
+        userXP: userXP,
+        targetXP: targetXP,
+        onWordSaved: _addWordToVocabulary,
+        onStoryCompleted: () {
+          setState(() {
+            userXP += 50; 
+            if (userXP >= targetXP) {
+              userXP = 0; 
+            }
+          });
+        },
+      ),
+      VocabularyTab(savedWords: savedWords),
+      ProfileTab(
+        isDarkMode: widget.isDarkMode,
+        onThemeChanged: widget.onThemeChanged,
+        streakDays: streakDays,
+        totalWords: savedWords.length,
+      ),
+    ];
+
+    return Scaffold(
+      body: SafeArea(child: screens[_currentIndex]),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        selectedItemColor: Colors.blueAccent,
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.book), label: 'القصص'),
+          BottomNavigationBarItem(icon: Icon(Icons.style), label: 'مفرداتي'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'حسابي'),
+        ],
+      ),
+    );
+  }
+}
+
+class StoriesTab extends StatelessWidget {
+  final int streakDays;
+  final int userXP;
+  final int targetXP;
+  final Function(String, String, String) onWordSaved;
+  final VoidCallback onStoryCompleted;
+
+  const StoriesTab({
+    super.key,
+    required this.streakDays,
+    required this.userXP,
+    required this.targetXP,
+    required this.onWordSaved,
+    required this.onStoryCompleted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Map<String, dynamic>> stories = [
+      {
+        'title': 'The Lion and the Mouse',
+        'arabicTitle': 'الأسد والفأر الذكي',
+        'level': 'Beginner (A1)',
+        'levelColor': Colors.green,
+        'image': Icons.pets,
+        'words': ['The', 'lion', 'was', 'sleeping', 'in', 'the', 'forest', 'when', 'a', 'little', 'mouse', 'ran', 'over', 'his', 'face.'],
+        'translations': {
+          'lion': {'ar': 'أسد', 'ex': 'The lion is the king of the forest.'},
+          'sleeping': {'ar': 'نائم', 'ex': 'The baby is sleeping now.'},
+          'forest': {'ar': 'غابة', 'ex': 'Animals live in the forest.'},
+          'mouse': {'ar': 'فأر', 'ex': 'The cat chased the mouse.'},
+        }
+      },
+      {
+        'title': 'Journey to the Moon',
+        'arabicTitle': 'الرحلة إلى القمر',
+        'level': 'Intermediate (B1)',
+        'levelColor': Colors.orange,
+        'image': Icons.rocket_launch,
+        'words': ['The', 'astronauts', 'prepared', 'for', 'a', 'long', 'journey', 'to', 'explore', 'the', 'moon', 'surface.'],
+        'translations': {
+          'astronauts': {'ar': 'رواد الفضاء', 'ex': 'Astronauts travel to space.'},
+          'journey': {'ar': 'رحلة طويلة', 'ex': 'We had a safe journey.'},
+          'explore': {'ar': 'يستكشف', 'ex': 'Children love to explore.'},
+          'moon': {'ar': 'القمر', 'ex': 'The moon shines at night.'},
+        }
+      },
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('مرحباً بك مجدداً! 👋', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text('جاهز لتطوير لغتك اليوم؟', style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(color: Colors.orange.withOpacity(0.15), borderRadius: BorderRadius.circular(20)),
+                child: Row(
+                  children: [
+                    const Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
+                    const SizedBox(width: 4),
+                    Text('$streakDays يوم متتالي', style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.blueAccent.withOpacity(0.08), borderRadius: BorderRadius.circular(16)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('المستوى 2', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+                    Text('$userXP / $targetXP XP', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: userXP / targetXP,
+                    backgroundColor: Colors.grey[300],
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                    minHeight: 8,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text('اختر قصة تفاعلية وابدأ:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Expanded(
+            child: ListView.builder(
+              itemCount: stories.length,
+              itemBuilder: (context, index) {
+                final story = stories[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReaderScreen(
+                            story: story,
+                            onWordSaved: onWordSaved,
+                            onStoryCompleted: onStoryCompleted,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(color: story['levelColor'].withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                            child: Icon(story['image'], color: story['levelColor'], size: 30),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(story['title'], style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 4),
+                                Text(story['arabicTitle'], style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ReaderScreen extends StatefulWidget {
+  final Map<String, dynamic> story;
+  final Function(String, String, String) onWordSaved;
+  final VoidCallback onStoryCompleted;
+
+  const ReaderScreen({
+    super.key,
+    required this.story,
+    required this.onWordSaved,
+    required this.onStoryCompleted,
+  });
+
+  @override
+  State<ReaderScreen> createState() => _ReaderScreenState();
+}
+
+class _ReaderScreenState extends State<ReaderScreen> {
+  void _showWordTranslation(BuildContext context, String word) {
+    final cleanedWord = word.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '');
+    final translations = widget.story['translations'] as Map<String, dynamic>;
+
+    if (translations.containsKey(cleanedWord)) {
+      final info = translations[cleanedWord]!;
+      showModalBottomSheet(
+        context: context,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        builder: (context) {
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(word, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+                const Divider(),
+                const Text('الترجمة العربية:', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(info['ar']!, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                const Text('مثال:', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(info['ex']!, style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic)),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+                    onPressed: () {
+                      widget.onWordSaved(cleanedWord, info['ar']!, info['ex']!);
+                      Navigator.pop(context);
+                    },
+                    child: const Text('حفظ في مفرداتي', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String> words = widget.story['words'] as List<String>;
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.story['title']), backgroundColor: widget.story['levelColor']),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: Wrap(
+                spacing: 6.0,
+                runSpacing: 10.0,
+                children: words.map((word) {
+                  final cleaned = word.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '');
+                  final isInteractive = widget.story['translations'].containsKey(cleaned);
+                  return GestureDetector(
+                    onTap: () => _showWordTranslation(context, word),
+                    child: Text(
+                      '$word ',
+                      style: TextStyle(fontSize: 20, color: isInteractive ? Colors.blueAccent : null, fontWeight: isInteractive ? FontWeight.bold : FontWeight.normal),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, minimumSize: const Size(double.infinity, 50)),
+              onPressed: () {
+                widget.onStoryCompleted();
+                Navigator.pop(context);
+              },
+              child: const Text('أنهيت القراءة اليوم! 🏆', style: TextStyle(color: Colors.white, fontSize: 18)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class VocabularyTab extends StatefulWidget {
+  final List<Map<String, String>> savedWords;
+  const VocabularyTab({super.key, required this.savedWords});
+
+  @override
+  State<VocabularyTab> createState() => _VocabularyTabState();
+}
+
+class _VocabularyTabState extends State<VocabularyTab> {
+  int currentCardIndex = 0;
+  bool showTranslation = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.savedWords.isEmpty) {
+      return const Center(child: Text('قاموسك فارغ حالياً!'));
+    }
+    final currentWord = widget.savedWords[currentCardIndex];
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => showTranslation = !showTranslation),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(24)),
+                child: Center(
+                  child: Text(
+                    showTranslation ? currentWord['translation']! : currentWord['word']!,
+                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(onPressed: () => setState(() => currentCardIndex = (currentCardIndex - 1 + widget.savedWords.length) % widget.savedWords.length), child: const Text('السابق')),
+              ElevatedButton(onPressed: () => setState(() => currentCardIndex = (currentCardIndex + 1) % widget.savedWords.length), child: const Text('التالي')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ProfileTab extends StatelessWidget {
+  final bool isDarkMode;
+  final ValueChanged<bool> onThemeChanged;
+  final int streakDays;
+  final int totalWords;
+
+  const ProfileTab({super.key, required this.isDarkMode, required this.onThemeChanged, required this.streakDays, required this.totalWords});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.person, size: 80, color: Colors.blueAccent),
+          Text('أيام الالتزام: $streakDays', style: const TextStyle(fontSize: 20)),
+          Text('الكلمات المحفوظة: $totalWords', style: const TextStyle(fontSize: 20)),
+          SwitchListTile(title: const Text('الوضع الداكن'), value: isDarkMode, onChanged: onThemeChanged),
+        ],
+      ),
+    );
+  }
+}
